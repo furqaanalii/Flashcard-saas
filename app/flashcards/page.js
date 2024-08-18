@@ -6,7 +6,7 @@ import { db } from '@/firebase'
 import { useRouter } from 'next/navigation'
 import { Container, Grid, Card, CardActionArea, CardContent, Typography } from '@mui/material'
 
-export default function Flashcards() {
+export default function Flashcard() {
     const { isLoaded, isSignedIn, user } = useUser()
     const [flashcards, setFlashcards] = useState([])
     const router = useRouter()

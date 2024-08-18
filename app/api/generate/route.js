@@ -28,8 +28,8 @@ Return the flashcards in the following JSON format:
 {
     "flashcards":[
         {
-            "front": str,
-            "back": str
+            "front": "Front of the card",
+            "back": "Back of the card"
         }
     ]
 }

@@ -2,20 +2,11 @@
 import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
+const formatAmountForStripe = (amount, currency) => {
+  return Math.round(amount * 100)
+ } 
+
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-
-export async function GET(req) {
-  const { searchParams } = req.nextUrl
-  const session_id = searchParams.get('session_id')
-
-  try {
-    const checkoutSession = await stripe.checkout.sessions.retrieve(session_id)
-    return NextResponse.json(checkoutSession)
-  } catch (error) {
-    console.error('Error retrieving checkout session:', error)
-    return NextResponse.json({ error: { message: error.message } }, { status: 500 })
-  }
-}
 
 export async function POST(req) {
   try {
@@ -52,5 +43,23 @@ export async function POST(req) {
     return NextResponse.json({ error: error.message }, {
       status: 500,
     })
+  }
+}
+
+export async function GET(req) {
+  const searchParams = req.nextUrl.searchParams
+  const session_id = searchParams.get('session_id')
+
+  try {
+    if (!session_id) {
+      throw new Error('Session ID is required')
+    }
+
+    const checkoutSession = await stripe.checkout.sessions.retrieve(session_id)
+
+    return NextResponse.json(checkoutSession)
+  } catch (error) {
+    console.error('Error retrieving checkout session:', error)
+    return NextResponse.json({ error: { message: error.message } }, { status: 500 })
   }
 }

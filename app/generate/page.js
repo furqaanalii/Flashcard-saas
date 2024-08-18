@@ -33,12 +33,27 @@ export default function Generate() {
     const router = useRouter()
 
     const handleSubmit = async () => {
-        fetch('/api/generate', {
-            method: 'POST',
-            body: text,
-        })
-            .then((res) => res.json())
-            .then((data) => setFlashcards(data))
+        if (!text.trim()) {
+            alert('Please enter some text to generate flashcards.')
+            return
+          }
+        
+          try {
+            const response = await fetch('/api/generate', {
+              method: 'POST',
+              body: text,
+            })
+        
+            if (!response.ok) {
+              throw new Error('Failed to generate flashcards')
+            }
+        
+            const data = await response.json()
+            setFlashcards(data)
+          } catch (error) {
+            console.error('Error generating flashcards:', error)
+            alert('An error occurred while generating flashcards. Please try again.')
+          }
     }
     
 
@@ -57,37 +72,37 @@ export default function Generate() {
     }
 
     const saveFlashcards = async () => {
-        if (!name) {
-            alert('Please enter a name')
+        if (!setName) {
+            alert('Please enter a name for your flashcard set.')
             return
-        }
-
-        const batch = writeBatch(db)
-        const userDocRef = doc(collection(db, 'users'), user.id)
-        const docSnap = await getDoc(userDocRef)
-
-        if (docSnap.exists()) {
-            const collections = docSnap.data().flashcards || []
-            if (collections.find((f) => f.name === name)) {
-                alert('Flashcard collection with the same name already exists')
-                return
+          }
+        
+          try {
+            const userDocRef = doc(collection(db, 'users'), user.id)
+            const userDocSnap = await getDoc(userDocRef)
+        
+            const batch = writeBatch(db)
+        
+            if (userDocSnap.exists()) {
+              const userData = userDocSnap.data()
+              const updatedSets = [...(userData.flashcardSets || []), { name: setName }]
+              batch.update(userDocRef, { flashcardSets: updatedSets })
             } else {
-                collections.push({ name })
-                batch.set(userDocRef, { flashcards: collections }, { merge: true })
+              batch.set(userDocRef, { flashcardSets: [{ name: setName }] })
             }
-        } else {
-            batch.set(userDocRef, { flashcards: [{ name }] })
-        }
-
-        const colRef = collection(userDocRef, name)
-        flashcards.forEach((flashcard) => {
-            const cardDocRef = doc(colRef)
-            batch.set(cardDocRef, flashcard)
-        })
-
-        await batch.commit()
-        handleClose()
-        router.push('/flashcards')
+        
+            const setDocRef = doc(collection(userDocRef, 'flashcardSets'), setName)
+            batch.set(setDocRef, { flashcards })
+        
+            await batch.commit()
+        
+            alert('Flashcards saved successfully!')
+            handleClose()
+            setName('')
+          } catch (error) {
+            console.error('Error saving flashcards:', error)
+            alert('An error occurred while saving flashcards. Please try again.')
+          }
     }
 
     return (

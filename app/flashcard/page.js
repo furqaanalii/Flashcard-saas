@@ -37,7 +37,7 @@ export default function Flashcard() {
             setFlashcards(flashcards)
         }
         getFlashcard()
-    }, [user, search])
+    }, [search, user])
 
     const handleCardClick = (id) => {
         setFlipped((prev) => ({
